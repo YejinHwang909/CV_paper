@@ -9,8 +9,8 @@ def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, d
         out_planes,
         kernel_size=3,
         stride=stride,
-        padding=dilation,
-        groups=groups,
+        padding=dilation, # 패딩은 1이므로 이미지 크기는 줄어들지 않는다.
+        groups=groups, # ResNetxt에 적용되는 개념이다.
         bias=False,
         dilation=dilation,
     )
@@ -30,7 +30,7 @@ class BasicBlock(nn.Module):
         downsample: Optional[nn.Module] = None,
         groups: int = 1,
         base_width: int = 64,
-        dilation: int = 1,
+        dilation: int = 1, # 커널 포인트 사이의 거리
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
@@ -62,7 +62,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
+        out += identity # out에 identity(x)를 더해준다.
         out = self.relu(out)
 
         return out
@@ -129,7 +129,7 @@ class ResNet(nn.Module):
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
-        norm_layer: Optional[Cllable[..., nn.Module]] = None,
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
         _log_api_usage_once(self)
@@ -164,6 +164,7 @@ class ResNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                # # kaiming_normal은 'He 초깃값'으로 평균 0, 표준편차 sqrt(2 / input_n)의 가우스분포에 따른 난수를 사용한다.
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -247,7 +248,13 @@ def _resnet(
     **kwargs: Any,
 ) -> ResNet:
 
+    if weights is not None:
+        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
+
     model = ResNet(block, layers, **kwargs)
+
+    if weights is not None:
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     return model
 
