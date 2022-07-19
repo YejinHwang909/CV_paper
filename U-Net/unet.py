@@ -12,7 +12,7 @@ class DoubleConv(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(mid_channels),
-            nn.Conv2(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
         )
@@ -42,7 +42,7 @@ class Up(nn.Module):
         # bilinear를 하면 normal convolution을 통해 채널 수를 줄인다.
         if bilinear:
             self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels, in_channels  // 2)
+            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
             self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
             self.conv = DoubleConv(in_channels, out_channels)
